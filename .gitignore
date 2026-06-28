@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.claude/
+.env
+.pytest_cache/
+.DS_Store
+*.egg-info/
+*.docx
+node_modules/
+dist/
+.vite/
+.pen
