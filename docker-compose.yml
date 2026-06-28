@@ -48,7 +48,7 @@ services:
     depends_on:
       - api
 
-seeder:
+  seeder:
     image: alpine:latest
     depends_on:
       - api
