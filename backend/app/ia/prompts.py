@@ -60,22 +60,70 @@ def prompt_inferir_estado(
             "respuesta_desarrollador": respuesta_desarrollador,
         }
     )
-    prompt = f"""Analizá la ÚLTIMA respuesta de un Desarrollador sobre el avance de su tarea
-e inferí el estado actual. Tené en cuenta TODO el historial de la conversación: el
-desarrollador puede referirse a mensajes anteriores (por ejemplo preguntar si ya se le
-resolvió un bloqueo). No marques BLOQUEADA si la última respuesta indica que ya avanza o
-que el impedimento se resolvió.
+    prompt = f"""Sos un asistente que hace seguimiento asincrónico del avance de tareas (reemplaza
+la daily). Analizá la ÚLTIMA respuesta del Desarrollador EN EL CONTEXTO de TODA la conversación e
+inferí: (1) el estado actual de la tarea y (2) si conviene seguir conversando o cerrar la charla.
 
-Estados posibles:
-- EN_PROGRESO: está trabajando, hay avance, sin impedimentos.
-- BLOQUEADA: hay un impedimento que frena el avance.
+Leé el historial completo: el desarrollador puede referirse a mensajes anteriores (por ejemplo
+preguntar si ya le resolvieron un bloqueo).
+
+Estados:
+- EN_PROGRESO: está trabajando, hay avance. Es el estado POR DEFECTO.
+- BLOQUEADA: úsalo SOLO si el desarrollador dice EXPLÍCITAMENTE que está FRENADO y NO puede
+  avanzar por su cuenta, y necesita ayuda de otra persona o un recurso/permiso que no tiene
+  (ej.: "estoy trabado y no puedo seguir hasta que me den acceso", "necesito que el SM me
+  habilite X"). Que sea un BLOQUEO REAL que requiera escalarlo.
 - COMPLETADA: la tarea está terminada.
+
+MUY IMPORTANTE — no sobre-detectes bloqueos:
+- Mencionar un tema, bug, duda o pendiente que el desarrollador ESTÁ investigando o resolviendo
+  por su cuenta NO es un bloqueo. Ej.: "vengo viendo un tema de las api keys", "estoy revisando
+  un bug", "ajustando unos detalles" → eso es EN_PROGRESO, sigue avanzando.
+- Palabras como "tema", "problema", "viendo", "revisando" NO implican BLOQUEADA por sí solas.
+- Si NO afirma claramente que está frenado y que necesita ayuda externa, es EN_PROGRESO.
+- NO marques BLOQUEADA si ya avanza o si el impedimento se resolvió.
+- Ante la duda, EN_PROGRESO: un falso bloqueo genera escalamientos y ruido innecesario.
+
+Campo "continuar" (clave: NO seas insistente, respetá al desarrollador):
+- false si el desarrollador DA POR TERMINADA la charla o no hay nada útil para preguntar ahora.
+  Señales de cierre: "nada más", "eso es todo", "después te cuento", "luego sigo", "listo por hoy",
+  "por ahora nada", "gracias", "ok", "dale", o una respuesta corta de mera cortesía. Ante la duda,
+  si suena a cierre cordial, poné false: NO vuelvas a preguntar.
+- true SOLO si la respuesta deja algo concreto y abierto para profundizar y el desarrollador
+  claramente sigue en la conversación.
+Si el estado es COMPLETADA o BLOQUEADA, "continuar" debe ser false (no hay que seguir indagando).
 
 Datos (notación TOON):
 {bloque}
 
 Respondé EXCLUSIVAMENTE con JSON:
-{{"estado": "EN_PROGRESO|BLOQUEADA|COMPLETADA", "resumen": "<síntesis del avance>", "contexto_bloqueo": "<si BLOQUEADA, describí el impedimento; si no, null>"}}"""
+{{"estado": "EN_PROGRESO|BLOQUEADA|COMPLETADA", "continuar": true|false, "resumen": "<síntesis del avance>", "contexto_bloqueo": "<si BLOQUEADA, el impedimento; si no, null>", "cierre": "<si continuar=false, UNA frase breve y cordial para cerrar acorde al contexto; si no, null>"}}"""
+    return prompt, json_equivalente
+
+
+def prompt_resumen_actividad_dev(desarrollador: dict, tareas: list[dict]) -> tuple[str, int]:
+    bloque, json_equivalente = _serializar({"desarrollador": desarrollador, "tareas": tareas})
+    prompt = f"""Sos un asistente que le arma al Scrum Master un seguimiento del avance de UN
+desarrollador. Con las tareas del sprint asignadas a esta persona (cada una con su estado, sus
+fechas y la conversación de avance que tuvo con el asistente), escribí un RESUMEN NARRATIVO,
+claro y concreto, contando qué viene haciendo. En español rioplatense, tono profesional.
+
+Cubrí, cuando los datos lo permitan:
+- Por cada tarea que arrancó: cuándo la empezó (fecha de inicio) y qué fue avanzando según la
+  conversación (pasos concretos, decisiones, lo que mencionó).
+- En qué está trabajando ACTUALMENTE y el estado de cada tarea (en progreso, bloqueada, completada).
+- Si hay tareas asignadas que TODAVÍA NO arrancó, mencionalo.
+- Si alguna está bloqueada, decí por qué.
+
+Reglas:
+- Usá SOLO la información de los datos. No inventes avances que no estén en las conversaciones.
+- Si una tarea no tiene conversación, decí que aún no hay reportes de avance de esa tarea.
+- 1 o 2 párrafos breves. Sin viñetas ni encabezados, redacción corrida.
+
+Datos (notación TOON):
+{bloque}
+
+Respondé solo con el texto del resumen, sin prefijos ni comillas."""
     return prompt, json_equivalente
 
 

@@ -6,6 +6,7 @@ from app.core.config import config
 COL_PERFILES = "perfiles_conocimiento"
 COL_CONVERSACIONES = "conversaciones"
 COL_LOGS = "logs_auditoria"
+COL_RESUMENES_DEV = "resumenes_actividad"  # resumen IA del avance de cada dev (cacheado por cuota)
 
 _cliente: AsyncIOMotorClient | None = None
 
@@ -26,6 +27,7 @@ async def crear_indices() -> None:
     db = obtener_mongo()
     await db[COL_PERFILES].create_index("id_usuario_postgres", unique=True)
     await db[COL_CONVERSACIONES].create_index("id_tarea_postgres")
+    await db[COL_RESUMENES_DEV].create_index("id_usuario_postgres", unique=True)
     await db[COL_LOGS].create_index("fecha")
     await db[COL_LOGS].create_index("id_usuario_postgres")
     await db[COL_LOGS].create_index("tipo_evento")

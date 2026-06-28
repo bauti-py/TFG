@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
-import type { Bloqueo, ResumenSeguimiento, Rol, Sprint, Tarea } from "../tipos";
+import type { Bloqueo, EventoCronologia, ResumenSeguimiento, Rol, Sprint, Tarea } from "../tipos";
 import { Avatar, Badge, BadgeEstado, BadgePrioridad } from "../ui";
 import { cargarDirectorio, nombreDe } from "../directorio";
 import PanelSeguimiento from "./PanelSeguimiento";
+import Cronologia from "./Cronologia";
 
 export default function Seguimiento({ rol }: { rol: Rol }) {
   return rol === "LIDER_TECNICO" ? <Informes /> : <SeguimientoSprint />;
@@ -12,6 +13,7 @@ export default function Seguimiento({ rol }: { rol: Rol }) {
 function Informes() {
   const [elevados, setElevados] = useState<Bloqueo[]>([]);
   const [resumenes, setResumenes] = useState<Record<number, string>>({});
+  const [cronos, setCronos] = useState<Record<number, EventoCronologia[]>>({});
   const [textos, setTextos] = useState<Record<number, string>>({});
   const [resolviendo, setResolviendo] = useState<number | null>(null);
   const [error, setError] = useState("");
@@ -30,6 +32,12 @@ function Informes() {
           setResumenes((m) => ({ ...m, [b.id_bloqueo]: r.resumen }));
         } catch {
           /* resumen best-effort */
+        }
+        try {
+          const ev = await api.get<EventoCronologia[]>(`/tareas/${b.id_tarea}/seguimiento/cronologia`);
+          setCronos((m) => ({ ...m, [b.id_tarea]: ev }));
+        } catch {
+          /* cronología best-effort */
         }
       });
     } catch (e) {
@@ -78,10 +86,22 @@ function Informes() {
             </div>
             <p className="contexto-bloqueo">{b.contexto}</p>
 
+            {b.resolucion && (
+              <div className="nota-sm">
+                <span className="nota-sm-titulo">🗣️ Observación del Scrum Master</span>
+                <p>{b.resolucion}</p>
+              </div>
+            )}
+
             <div className="resumen-ia">
               <span className="resumen-ia-titulo">✦ Resumen de la IA</span>
               <p>{resumenes[b.id_bloqueo] ?? "Generando resumen…"}</p>
             </div>
+
+            <details className="informe-cronologia">
+              <summary>Ver actividad de la tarea</summary>
+              <Cronologia eventos={cronos[b.id_tarea] ?? []} />
+            </details>
 
             <textarea
               placeholder="Describí la resolución para el desarrollador…"

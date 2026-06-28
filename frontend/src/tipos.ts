@@ -44,6 +44,37 @@ export interface PerfilSalida {
   metricas_agregadas: Record<string, unknown>;
 }
 
+export interface TareaActividad {
+  id_tarea: number;
+  descripcion: string;
+  estado: string;
+  fecha_inicio: string | null;
+  fecha_cierre: string | null;
+}
+
+export interface ActividadDev {
+  id_usuario: number;
+  nombre: string;
+  seniority: string;
+  tareas: TareaActividad[];
+  resumen: string | null;
+  resumen_fecha: string | null;
+}
+
+export interface ResumenDev {
+  resumen: string | null;
+  fecha: string | null;
+  sin_servicio?: boolean;
+}
+
+export interface EventoCronologia {
+  tipo: "comentario" | "estado";
+  fecha: string;
+  autor: string | null;
+  texto: string | null;
+  estado: string | null;
+}
+
 export interface Sprint {
   id_sprint: number;
   objetivo: string;

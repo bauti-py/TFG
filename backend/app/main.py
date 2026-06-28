@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import app.modelos  # noqa: F401  — registra los modelos ORM en Base.metadata para crear_esquema()
-from app.api.rutas import auth, bloqueos, dashboard, seguimiento, sprints, tareas, usuarios
+from app.api.rutas import auth, bloqueos, dashboard, equipo, seguimiento, sprints, tareas, usuarios
 from app.core.base_datos import SesionLocal, crear_esquema
 from app.core.config import config
 from app.core.mongo import cerrar_mongo, crear_indices
@@ -61,6 +61,7 @@ for enrutador in (
     seguimiento.router,
     bloqueos.router,
     dashboard.router,
+    equipo.router,
 ):
     app.include_router(enrutador, prefix=config.API_PREFIJO)
 

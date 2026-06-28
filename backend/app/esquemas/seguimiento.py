@@ -33,3 +33,34 @@ class MensajeConversacion(BaseModel):
 class ResumenSeguimiento(BaseModel):
     id_tarea: int
     resumen: str
+
+
+class EventoCronologia(BaseModel):
+    tipo: str  # "comentario" | "estado"
+    fecha: datetime
+    autor: str | None = None
+    texto: str | None = None
+    estado: EstadoTarea | None = None
+
+
+class TareaActividad(BaseModel):
+    id_tarea: int
+    descripcion: str
+    estado: EstadoTarea
+    fecha_inicio: datetime | None = None
+    fecha_cierre: datetime | None = None
+
+
+class ActividadDev(BaseModel):
+    id_usuario: int
+    nombre: str
+    seniority: str
+    tareas: list[TareaActividad]
+    resumen: str | None = None
+    resumen_fecha: datetime | None = None
+
+
+class ResumenDev(BaseModel):
+    resumen: str | None = None
+    fecha: datetime | None = None
+    sin_servicio: bool = False

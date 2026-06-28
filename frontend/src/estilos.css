@@ -1173,6 +1173,207 @@ tr.inactivo {
   font-size: 13px;
   line-height: 1.5;
 }
+
+/* --- Seguimiento del equipo (SM) --- */
+.lista-equipo {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.card-dev-seguimiento {
+  background: var(--surface);
+  border: 1px solid var(--linea-12);
+  border-radius: var(--r-card);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.card-dev-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+.card-dev-info {
+  flex: 1;
+  min-width: 0;
+}
+.card-dev-cabecera b {
+  font-size: 14px;
+}
+.card-dev-cabecera small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 1px;
+}
+.chevron {
+  color: var(--muted);
+  font-size: 12px;
+  width: 12px;
+}
+.boton-icono.libro {
+  font-size: 17px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+.boton-icono.libro:hover {
+  background: var(--surface-2);
+}
+.boton-icono.libro:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.card-dev-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 4px;
+}
+.tareas-dev-detalle {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tarea-status {
+  border: 1px solid var(--linea-soft2);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.tarea-status-cab {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tarea-status-cab .tarea-dev-desc {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+}
+.tarea-status-fechas {
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 4px;
+}
+.cronologia {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 8px 0 0;
+  border-top: 1px solid var(--linea-soft2);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.cronologia li {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.cronologia time {
+  flex-shrink: 0;
+  width: 92px;
+  color: var(--muted);
+  font-size: 11px;
+  padding-top: 1px;
+}
+.crono-comentario.dev span {
+  color: var(--txt);
+}
+.crono-comentario.asistente span {
+  color: var(--muted);
+}
+.crono-estado .crono-hito {
+  color: var(--acento);
+  font-weight: 600;
+}
+.nota-sm {
+  background: #f59e0b14;
+  border: 1px solid #f59e0b40;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.nota-sm-titulo {
+  color: var(--ambar);
+  font-size: 11px;
+  font-weight: 600;
+}
+.nota-sm p {
+  margin: 4px 0 0;
+  color: var(--txt);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.informe-cronologia summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 4px 0;
+}
+.informe-cronologia summary:hover {
+  color: var(--txt);
+}
+.informe-cronologia .cronologia {
+  border-top: none;
+  margin-top: 6px;
+}
+.muted.chico {
+  font-size: 12px;
+  margin: 6px 0 0;
+}
+.resumen-ia-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.boton-secundario.chico {
+  padding: 5px 10px;
+  font-size: 12px;
+}
+.resumen-ia-fecha {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.resumen-ia .muted {
+  color: var(--muted);
+}
+.error.chico {
+  font-size: 12px;
+  margin: 6px 0 0;
+}
+.tareas-dev {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tareas-dev li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-top: 1px solid var(--linea-soft2);
+  font-size: 13px;
+}
+.tarea-dev-desc {
+  flex: 1;
+  min-width: 0;
+}
+.tarea-dev-fechas {
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
 .perfil-detalle {
   gap: 16px;
 }
@@ -1461,7 +1662,7 @@ input[type="date"] {
   position: fixed;
   right: 24px;
   bottom: 92px;
-  width: 360px;
+  width: 520px;
   max-width: calc(100vw - 48px);
   height: 520px;
   max-height: calc(100vh - 120px);
@@ -1475,8 +1676,19 @@ input[type="date"] {
   z-index: 41;
 }
 .chat-cabecera {
-  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--linea-soft2);
+}
+.chat-cabecera-mascota {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--acento-bg);
 }
 .chat-cabecera b {
   font-size: 14px;
@@ -1485,16 +1697,126 @@ input[type="date"] {
   display: block;
   color: var(--muted);
   font-size: 12px;
-  margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin-top: 1px;
 }
-.chat-selector {
-  margin: 10px 16px 0;
-  width: calc(100% - 32px);
-  height: 34px;
+.chat-split {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+.chat-lista-col {
+  width: 168px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--surface-2);
+  border-right: 1px solid var(--linea-soft2);
+}
+.chat-col-titulo {
+  margin: 0;
+  padding: 12px 14px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.chat-lista {
+  flex: 1;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.chat-lista li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: background 0.12s;
+}
+.chat-lista li.activa {
+  background: var(--surface);
+  border-left-color: var(--acento);
+}
+.chat-lista li.pendiente {
+  border-left-color: var(--acento);
+}
+.chat-lista-num {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.chat-lista li.activa .chat-lista-num,
+.chat-lista li.pendiente .chat-lista-num {
+  color: var(--acento);
+}
+.chat-lista-desc {
   font-size: 12px;
+  line-height: 1.3;
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.chat-lista li.activa .chat-lista-desc,
+.chat-lista li.pendiente .chat-lista-desc {
+  color: var(--txt);
+}
+.chat-lista li.pendiente .chat-lista-desc {
+  font-weight: 600;
+}
+.chat-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.chat-panel-cabecera {
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--linea-soft2);
+}
+.chat-panel-num {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--acento);
+  margin-bottom: 2px;
+}
+.chat-panel-cabecera b {
+  display: block;
+  font-size: 13px;
+  line-height: 1.3;
+}
+.chat-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.chat-estado::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.chat-estado.pend {
+  color: var(--ambar);
+}
+.chat-estado.pend::before {
+  background: var(--ambar);
+}
+.chat-estado.ok {
+  color: var(--verde);
+}
+.chat-estado.ok::before {
+  background: var(--verde);
 }
 .chat-cuerpo {
   flex: 1;
@@ -1572,5 +1894,8 @@ input[type="date"] {
     left: 12px;
     width: auto;
     max-width: none;
+  }
+  .chat-lista {
+    width: 120px;
   }
 }

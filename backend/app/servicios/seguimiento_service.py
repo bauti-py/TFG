@@ -1,47 +1,46 @@
 """Seguimiento conversacional asincrónico (CU4, RF6/RF7/RF12)."""
 from fastapi import HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.esquemas.seguimiento import ConsultaAvanceSalida, ResultadoSeguimiento
 from app.ia import cliente_gemini, prompts
 from app.modelos.enums import EstadoTarea
 from app.modelos.tarea import Tarea
+from app.modelos.transicion_estado import TransicionEstado
 from app.repositorios import conversacion_repo, perfil_repo
 from app.servicios import bloqueo_service, estado_service
 from app.servicios.usuario_service import obtener_por_id
 
 
-_PISTAS_DESTRABE = (
-    "ya me lo resolv", "ya lo resolv", "se resolvi", "se solucion", "destrab", "pude seguir",
-    "pude avanzar", "pude continuar", "ya pude", "ahora sí", "ahora si", "ya tengo acceso",
-    "ya me cargaste", "ya me dieron", "quedó destrabado",
-)
-_PISTAS_COMPLETA = (
-    "termin", "complet", "finalic", "finaliz", "ya está list", "ya esta list", "quedó listo",
-    "quedo listo", "ya lo hice", "hecho", "mergeado", "lo deployé", "lo deploye",
-)
-_PISTAS_BLOQUEO = (
-    "trabé", "trabe", "trabó", "trabado", "trabada", "atasc", "atorad", "bloque", "impedimento",
-    "no puedo avanzar", "no me deja", "no me anda", "no funciona", "no tengo acceso",
-    "no tengo las", "me falta", "necesito ayuda", "necesito que", "esperando", "depende de",
-    "frenad", "no pude",
-)
+# Estados que se muestran en la cronología como hito (el resto es ruido de asignación).
+_ESTADOS_HITO = {
+    EstadoTarea.ASIGNADA, EstadoTarea.EN_PROGRESO, EstadoTarea.BLOQUEADA, EstadoTarea.COMPLETADA,
+}
 
 
-def _inferir_determinista(texto: str) -> dict:
-    """Inferencia por palabras clave cuando la IA no respondió. Mantiene el Q&A vivo."""
-    t = texto.lower()
-    if any(p in t for p in _PISTAS_DESTRABE):
-        return {"estado": "EN_PROGRESO", "resumen": "¡Genial que se haya destrabado! Seguí avanzando.", "contexto_bloqueo": None}
-    if any(p in t for p in _PISTAS_COMPLETA):
-        return {"estado": "COMPLETADA", "resumen": "¡Genial! Marco la tarea como completada.", "contexto_bloqueo": None}
-    if any(p in t for p in _PISTAS_BLOQUEO):
-        return {
-            "estado": "BLOQUEADA",
-            "resumen": "Detecté un posible bloqueo en tu respuesta; avisé al Scrum Master.",
-            "contexto_bloqueo": texto,
-        }
-    return {"estado": "EN_PROGRESO", "resumen": "Anotado, seguís en progreso. ¡Gracias por el update!", "contexto_bloqueo": None}
+async def cronologia(db: AsyncSession, tarea: Tarea) -> list[dict]:
+    """Historial de estados (hitos) de la tarea, por fecha. El detalle conversacional lo da la IA."""
+    transiciones = (
+        await db.execute(
+            select(TransicionEstado.estado, TransicionEstado.fecha_transicion)
+            .where(TransicionEstado.id_tarea == tarea.id_tarea)
+            .order_by(TransicionEstado.fecha_transicion.asc())
+        )
+    ).all()
+    eventos: list[dict] = []
+    for estado, fecha in transiciones:
+        try:
+            est = EstadoTarea(estado)
+        except ValueError:
+            continue
+        if est in _ESTADOS_HITO:
+            eventos.append({"tipo": "estado", "fecha": fecha, "estado": est.value})
+    return eventos
+
+
+# El estado lo decide siempre la IA (ver prompt_inferir_estado). No hay heurísticas de
+# palabras clave: si Gemini no está disponible, la respuesta queda diferida (ver más abajo).
 
 
 async def _tarea_payload(db: AsyncSession, tarea: Tarea) -> dict:
@@ -122,8 +121,16 @@ async def procesar_respuesta(db: AsyncSession, tarea: Tarea, texto: str) -> Resu
     )
     estado_act = await estado_service.estado_actual(db, tarea.id_tarea)
 
+    # Sin IA disponible (sin key / cuota agotada / timeout): NO adivinamos el estado con
+    # heurísticas. Guardamos la respuesta como diferida, no tocamos el estado de la tarea
+    # (evita falsos bloqueos) y avisamos al desarrollador. Se retoma cuando la IA vuelva.
     if inferencia is None:
-        inferencia = _inferir_determinista(texto)
+        await conversacion_repo.registrar_respuesta(tarea.id_tarea, texto, None, diferido=True)
+        aviso = "Recibí tu mensaje y lo registré. El asistente está sin servicio por ahora; lo retomo apenas vuelva. 🙏"
+        return ResultadoSeguimiento(
+            id_tarea=tarea.id_tarea, estado_inferido=estado_act, resumen=aviso,
+            siguiente_pregunta=aviso, genero_bloqueo=False, diferido=True,
+        )
 
     await conversacion_repo.registrar_respuesta(tarea.id_tarea, texto, inferencia)
 
@@ -134,23 +141,31 @@ async def procesar_respuesta(db: AsyncSession, tarea: Tarea, texto: str) -> Resu
     except ValueError:
         estado_inferido = EstadoTarea.EN_PROGRESO
 
+    # La IA decide si tiene sentido seguir preguntando o cerrar la charla (no insistir).
+    continuar = bool(inferencia.get("continuar", True))
+    cierre = (inferencia.get("cierre") or "").strip()
+
     genero_bloqueo = False
     if estado_inferido == EstadoTarea.BLOQUEADA:
         await bloqueo_service.registrar_bloqueo(
             db, tarea, contexto_bloqueo or resumen or "Bloqueo detectado en seguimiento"
         )
         genero_bloqueo = True
-        siguiente = "Entiendo, anoté el impedimento y se lo paso al Scrum Master para destrabarte. ¿Querés contarme algo más mientras tanto?"
+        siguiente = "Entiendo, anoté el impedimento y se lo paso al Scrum Master para destrabarte. 🙌"
     elif estado_inferido == EstadoTarea.COMPLETADA:
         await estado_service.cambiar_estado(db, tarea, EstadoTarea.COMPLETADA)
         siguiente = "¡Genial, marqué la tarea como completada! 🎉 Gracias por el laburo."
     else:
         if estado_act in {EstadoTarea.ASIGNADA, EstadoTarea.BLOQUEADA}:
             await estado_service.cambiar_estado(db, tarea, EstadoTarea.EN_PROGRESO)
-        siguiente = (await generar_consulta(db, tarea)).pregunta
+        if continuar:
+            # Solo acá se persiste una consulta nueva → la conversación queda "pendiente".
+            siguiente = (await generar_consulta(db, tarea)).pregunta
+        else:
+            siguiente = cierre or "¡Perfecto! Lo dejo acá. Cuando tengas novedades me escribís 👍"
 
-    if siguiente and estado_inferido != EstadoTarea.EN_PROGRESO:
-        await conversacion_repo.agregar_consulta(tarea.id_tarea, tarea.id_usuario_asignado, siguiente)
+    # Los cierres y acks NO se persisten como consulta: así la charla no queda marcada como
+    # pendiente y la IA no vuelve a preguntar sola. Solo se muestran como respuesta del momento.
 
     return ResultadoSeguimiento(
         id_tarea=tarea.id_tarea, estado_inferido=estado_inferido, resumen=resumen,

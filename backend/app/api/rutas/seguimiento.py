@@ -7,6 +7,7 @@ from app.core.dependencias import obtener_usuario_actual
 from app.esquemas.auth import UsuarioActual
 from app.esquemas.seguimiento import (
     ConsultaAvanceSalida,
+    EventoCronologia,
     MensajeConversacion,
     RespuestaAvanceEntrada,
     ResultadoSeguimiento,
@@ -67,6 +68,20 @@ async def resumir(
     if tarea is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Tarea inexistente")
     return ResumenSeguimiento(id_tarea=id_tarea, resumen=await seguimiento_service.resumir_conversacion(db, tarea))
+
+
+@router.get("/cronologia", response_model=list[EventoCronologia])
+async def ver_cronologia(
+    id_tarea: int, db: AsyncSession = Depends(obtener_db),
+    usuario: UsuarioActual = Depends(obtener_usuario_actual),
+):
+    """Línea de tiempo de la tarea (comentarios + cambios de estado) para SM y TL."""
+    if usuario.rol not in {RolNombre.SCRUM_MASTER.value, RolNombre.LIDER_TECNICO.value}:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Solo el SM o el TL pueden ver la cronología")
+    tarea = await tarea_service.obtener_tarea(db, id_tarea)
+    if tarea is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Tarea inexistente")
+    return await seguimiento_service.cronologia(db, tarea)
 
 
 @router.get("/conversacion", response_model=list[MensajeConversacion],

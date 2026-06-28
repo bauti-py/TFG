@@ -8,6 +8,7 @@ export default function Bloqueos() {
   const [bloqueos, setBloqueos] = useState<Bloqueo[]>([]);
   const [textos, setTextos] = useState<Record<number, string>>({});
   const [dir, setDir] = useState<Record<number, string>>({});
+  const [dirListo, setDirListo] = useState(false);
   const [error, setError] = useState("");
 
   async function cargar() {
@@ -19,20 +20,24 @@ export default function Bloqueos() {
   }
 
   useEffect(() => {
-    cargarDirectorio().then(setDir);
+    cargarDirectorio().then((d) => {
+      setDir(d);
+      setDirListo(true);
+    });
     cargar();
   }, []);
 
   async function resolver(b: Bloqueo, persistente: boolean, escalar: boolean) {
     setError("");
-    const resolucion = textos[b.id_bloqueo] || "";
-    if (!resolucion) {
-      setError("Indica una resolución.");
+    const resolucion = (textos[b.id_bloqueo] || "").trim();
+    // Ignorar no necesita texto. Resolver pide la resolución; Elevar pide la observación para el TL.
+    if (!persistente && !resolucion) {
+      setError(escalar ? "Escribí una observación para el Líder Técnico antes de elevar." : "Indicá una resolución para cerrar el bloqueo.");
       return;
     }
     try {
       await api.post(`/bloqueos/${b.id_bloqueo}/resolver`, {
-        resolucion,
+        resolucion: resolucion || "Marcado como persistente por el SM",
         persistente,
         escalar_a_tl: escalar,
       });
@@ -72,7 +77,7 @@ export default function Bloqueos() {
               <b>{b.descripcion_tarea || `Tarea #${b.id_tarea}`}</b>
               <Badge valor={b.estado} tono="ambar" />
             </div>
-            {b.id_usuario_asignado && (
+            {dirListo && b.id_usuario_asignado && (
               <div className="dev-bloqueo">
                 <Avatar nombre={nombreDe(dir, b.id_usuario_asignado)} id={b.id_usuario_asignado} />
                 <span>

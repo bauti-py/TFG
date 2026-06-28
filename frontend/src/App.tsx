@@ -10,6 +10,7 @@ import Desarrolladores from "./vistas/Desarrolladores";
 import Sprints from "./vistas/Sprints";
 import Bloqueos from "./vistas/Bloqueos";
 import Seguimiento from "./vistas/Seguimiento";
+import SeguimientoEquipo from "./vistas/SeguimientoEquipo";
 import ChatAvance from "./vistas/ChatAvance";
 
 function cargarSesion(): Sesion | null {
@@ -40,7 +41,7 @@ const NAV: Record<Rol, Item[]> = {
     { clave: "dashboard", etiqueta: "Dashboard", icono: "dashboard" },
     { clave: "sprints", etiqueta: "Gestión de Sprints", icono: "sprint" },
     { clave: "bloqueos", etiqueta: "Bloqueos", icono: "bloqueos" },
-    { clave: "seguimiento", etiqueta: "Seguimiento", icono: "seguimiento" },
+    { clave: "equipo", etiqueta: "Seguimiento", icono: "seguimiento" },
   ],
   DESARROLLADOR: [{ clave: "dashboard", etiqueta: "Dashboard", icono: "dashboard" }],
 };
@@ -133,6 +134,7 @@ export default function App() {
           {vista === "sprints" && <Sprints />}
           {vista === "bloqueos" && <Bloqueos />}
           {vista === "seguimiento" && <Seguimiento rol={sesion.rol} />}
+          {vista === "equipo" && <SeguimientoEquipo />}
         </main>
       </div>
 
