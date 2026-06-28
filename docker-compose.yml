@@ -48,6 +48,26 @@ services:
     depends_on:
       - api
 
+seeder:
+    image: alpine:latest
+    depends_on:
+      - api
+    volumes:
+      # Asegúrate de que esta ruta coincida con la ubicación real de tu script
+      - ./scripts/seed_demo.sh:/seed_demo.sh 
+    environment:
+      # Sobreescribimos la variable de tu script. 
+      # Dentro de Docker, localhost no funciona para ver a otros contenedores.
+      API: "http://api:8000/api" 
+    command: >
+      sh -c "
+      apk add --no-cache bash curl jq python3 &&
+      echo 'Esperando a que la API esté lista...' &&
+      while ! curl -s http://api:8000 > /dev/null; do sleep 3; done;
+      echo 'API activa. Ejecutando seed...' &&
+      bash /seed_demo.sh
+      "
+      
 volumes:
   pg_data:
   mongo_data:

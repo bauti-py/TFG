@@ -50,12 +50,12 @@ crear_usuario() {
 }
 
 echo "→ Creando Scrum Master"
-crear_usuario "Sofía Méndez" "sm@demo.com"   "ScrumM1!" "SCRUM_MASTER" '{}'
+crear_usuario "Sofia Mendez" "sm@demo.com"   "ScrumM1!" "SCRUM_MASTER" '{}'
 
 echo "→ Creando 5 Desarrolladores con perfiles distintos"
-crear_usuario "Ana López"   "ana@demo.com"   "DevAna1!"   "DESARROLLADOR" \
+crear_usuario "Ana Lopez"   "ana@demo.com"   "DevAna1!"   "DESARROLLADOR" \
   '{"seniority":"Senior","lenguajes":["python","sql"],"frameworks":["fastapi"],"dominios":["backend","apis"]}'
-crear_usuario "Bruno Díaz"  "bruno@demo.com" "DevBruno1!" "DESARROLLADOR" \
+crear_usuario "Bruno Diaz"  "bruno@demo.com" "DevBruno1!" "DESARROLLADOR" \
   '{"seniority":"Senior","lenguajes":["javascript","typescript"],"frameworks":["react"],"dominios":["frontend","ui"]}'
 crear_usuario "Carla Ruiz"  "carla@demo.com" "DevCarla1!" "DESARROLLADOR" \
   '{"seniority":"Semi Senior","lenguajes":["python"],"frameworks":["django"],"dominios":["backend","datos"]}'
